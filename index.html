@@ -159,11 +159,12 @@ function computeStats(m) {
   return { last, max, min, avg, pr, avg7, avgPrior7, count: entries.length };
 }
 
-function renderChart(entries, direction) {
+function renderChart(entries, direction, goal) {
   if (entries.length < 2) return '<p style="text-align:center;color:var(--text-light);font-size:13px;margin-top:46px;">log at least 2 entries to see the trend</p>';
   const vals = entries.map(e => e.v);
-  const max = Math.max(...vals);
-  const min = Math.min(...vals);
+  const allVals = goal != null ? [...vals, goal] : vals;
+  const max = Math.max(...allVals);
+  const min = Math.min(...allVals);
   const range = Math.max(max - min, 0.0001);
   const W = 100, H = 100, pad = 4;
   const pts = entries.map((e, i) => {
@@ -175,8 +176,15 @@ function renderChart(entries, direction) {
   const lastIdx = entries.length - 1;
   const lastX = pad + (lastIdx / Math.max(entries.length - 1, 1)) * (W - 2 * pad);
   const lastY = H - pad - ((entries[lastIdx].v - min) / range) * (H - 2 * pad);
+  // Goal line (if set)
+  let goalLine = '';
+  if (goal != null && isFinite(goal)) {
+    const gy = H - pad - ((goal - min) / range) * (H - 2 * pad);
+    goalLine = `<line x1="${pad}" y1="${gy.toFixed(2)}" x2="${W-pad}" y2="${gy.toFixed(2)}" stroke="#e8b968" stroke-dasharray="2,2" stroke-width="0.8" vector-effect="non-scaling-stroke" />`;
+  }
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
     <path d="${fillPath}" fill="rgba(194,161,115,0.12)" />
+    ${goalLine}
     <polyline points="${pts.join(' ')}" fill="none" stroke="#c2a173" stroke-width="1.5" vector-effect="non-scaling-stroke" />
     <circle cx="${lastX.toFixed(2)}" cy="${lastY.toFixed(2)}" r="1.8" fill="#e8b968" />
   </svg>`;
@@ -210,14 +218,16 @@ function render() {
     const v = verdict(m, stats);
     const card = document.createElement('div');
     card.className = 'card';
+    const goalLine = (m.goal != null) ? `<span style="color:var(--accent-bright);margin-left:8px;">Goal: ${fmtVal(m.goal, m.unit)}</span>` : '';
     card.innerHTML = `
       <div class="card-head">
         <h3 class="metric-name">${escapeHtml(m.name)}</h3>
-        <span class="metric-meta">${m.direction === 'lower' ? '↓ lower is better' : '↑ higher is better'} · ${stats?.count ?? 0} entries</span>
+        <span class="metric-meta">${m.direction === 'lower' ? '↓ lower is better' : '↑ higher is better'} · ${stats?.count ?? 0} entries${goalLine}</span>
       </div>
       <div class="row">
-        <input type="number" inputmode="decimal" placeholder='today\\'s value' data-input="${idx}" step="any" />
-        <button class="btn btn-primary" data-log="${idx}">Log today</button>
+        <input type="number" inputmode="decimal" placeholder="today's value" data-input="${idx}" step="any" />
+        <input type="date" data-date-input="${idx}" value="${new Date().toISOString().slice(0,10)}" style="max-width: 160px;" />
+        <button class="btn btn-primary" data-log="${idx}">Log</button>
       </div>
       ${stats ? `
       <div class="stats-row">
@@ -225,7 +235,7 @@ function render() {
         <div class="stat"><div class="stat-label">${m.direction === 'lower' ? 'Best (lowest)' : 'Best'}</div><div class="stat-value pr">${fmtVal(stats.pr, m.unit)}</div></div>
         <div class="stat"><div class="stat-label">Avg</div><div class="stat-value">${fmtVal(stats.avg.toFixed(1), m.unit)}</div></div>
       </div>
-      <div class="chart">${renderChart(m.entries, m.direction)}</div>
+      <div class="chart">${renderChart(m.entries, m.direction, m.goal)}</div>
       <div class="verdict ${v.kind}">${v.text}</div>
       ${m.entries.length > 0 ? `
       <details style="margin-top:14px;">
@@ -235,13 +245,16 @@ function render() {
             <div class="history-row">
               <span class="history-date">${fmtDate(e.ts)}</span>
               <span class="history-val">${fmtVal(e.v, m.unit)}</span>
+              <button class="btn btn-quiet" data-edit-entry="${idx}" data-ent-idx="${m.entries.length - 1 - i}" style="padding:2px 8px;font-size:11px;">edit</button>
               <button class="btn btn-quiet" data-del-entry="${idx}" data-ent-idx="${m.entries.length - 1 - i}" style="padding:2px 8px;font-size:11px;">×</button>
             </div>
           `).join('')}
         </div>
       </details>` : ''}
       ` : `<p style="color:var(--text-light);font-size:13px;margin:10px 0 0;">Log your first value above to start the rivalry with yourself.</p>`}
-      <div style="margin-top:14px;text-align:right;">
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-quiet" data-set-goal="${idx}">${m.goal != null ? 'Edit goal' : '+ Set goal'}</button>
+        ${m.entries.length > 0 ? `<button class="btn btn-quiet" data-export-csv="${idx}">Export CSV</button>` : ''}
         <button class="btn btn-quiet" data-del-metric="${idx}">Delete metric</button>
       </div>
     `;
@@ -252,12 +265,74 @@ function render() {
     btn.addEventListener('click', () => {
       const idx = +btn.dataset.log;
       const inp = metricsEl.querySelector(`[data-input="${idx}"]`);
+      const dateInp = metricsEl.querySelector(`[data-date-input="${idx}"]`);
       const v = parseFloat(inp.value);
       if (!isFinite(v)) { inp.focus(); return; }
+      let ts = Date.now();
+      if (dateInp && dateInp.value) {
+        // Use the user-selected date but with current time-of-day so multiple
+        // entries per day stay distinguishable
+        const [y, m, d] = dateInp.value.split('-').map(Number);
+        const now = new Date();
+        ts = new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds()).getTime();
+      }
       state.metrics[idx].entries = state.metrics[idx].entries || [];
-      state.metrics[idx].entries.push({ ts: Date.now(), v });
+      state.metrics[idx].entries.push({ ts, v });
+      // Keep entries chronologically sorted so chart + verdict are correct
+      state.metrics[idx].entries.sort((a, b) => a.ts - b.ts);
       save();
       render();
+    });
+  });
+  // Set/edit goal
+  metricsEl.querySelectorAll('[data-set-goal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.setGoal;
+      const m = state.metrics[idx];
+      const current = m.goal != null ? String(m.goal) : '';
+      const raw = prompt(`Set your goal for "${m.name}" (numeric). Leave blank to remove.`, current);
+      if (raw === null) return;
+      if (raw.trim() === '') { delete m.goal; }
+      else {
+        const g = parseFloat(raw);
+        if (!isFinite(g)) { alert('Goal must be a number.'); return; }
+        m.goal = g;
+      }
+      save();
+      render();
+    });
+  });
+  // Edit entry
+  metricsEl.querySelectorAll('[data-edit-entry]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.editEntry;
+      const ei = +btn.dataset.entIdx;
+      const m = state.metrics[idx];
+      const e = m.entries[ei];
+      const raw = prompt(`Edit value (was ${e.v}):`, String(e.v));
+      if (raw === null) return;
+      const v = parseFloat(raw);
+      if (!isFinite(v)) { alert('Must be a number.'); return; }
+      e.v = v;
+      save();
+      render();
+    });
+  });
+  // CSV export
+  metricsEl.querySelectorAll('[data-export-csv]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.exportCsv;
+      const m = state.metrics[idx];
+      const rows = [['date', 'value', m.unit || 'unit']];
+      m.entries.forEach(e => rows.push([new Date(e.ts).toISOString().slice(0,10), String(e.v), m.unit || '']));
+      const csv = rows.map(r => r.map(c => /[,"\n]/.test(c) ? `"${c.replace(/"/g,'""')}"` : c).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const safeName = m.name.replace(/[^a-z0-9-]+/gi, '-').toLowerCase();
+      a.href = url; a.download = `rival-${safeName}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
   });
   metricsEl.querySelectorAll('[data-del-metric]').forEach(btn => {
