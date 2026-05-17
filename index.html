@@ -107,6 +107,8 @@
     Track any metric. The only comparison is to your own historical data. No leaderboards, no streaks designed to keep you addicted, no other people. The rival is you, last week.
   </p>
 
+  <div id="today-status"></div>
+
   <button class="btn btn-primary" id="open-add" style="margin-bottom: 24px;">+ Add a metric to track</button>
 
   <div id="metrics"></div>
@@ -216,7 +218,40 @@ function verdict(m, stats) {
   return { kind: 'match', text: 'On track. Keep going.' };
 }
 
+function renderTodayStatus() {
+  const el = document.getElementById('today-status');
+  if (!el || state.metrics.length === 0) { if (el) el.innerHTML = ''; return; }
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const logged = state.metrics.filter(m =>
+    (m.entries || []).some(e => new Date(e.ts).toISOString().slice(0, 10) === todayKey),
+  ).length;
+  const total = state.metrics.length;
+  const missing = state.metrics.filter(m =>
+    !(m.entries || []).some(e => new Date(e.ts).toISOString().slice(0, 10) === todayKey),
+  );
+  if (total === 0) { el.innerHTML = ''; return; }
+  const allLogged = logged === total;
+  el.innerHTML = `
+    <div style="background:var(--bg-2);border:1px solid ${allLogged ? 'var(--good)' : 'var(--border-light)'};border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;letter-spacing:.14em;color:var(--text-light);text-transform:uppercase;margin-bottom:4px;">Today</div>
+        <div style="font-size:16px;color:var(--text);font-weight:600;">
+          ${allLogged
+            ? `<span style="color:var(--good);">✓ All ${total} metrics logged today</span>`
+            : `${logged} of ${total} logged today`}
+        </div>
+      </div>
+      ${!allLogged && missing.length ? `
+        <div style="font-size:13px;color:var(--text-muted);max-width:320px;text-align:right;">
+          Still missing: ${missing.slice(0,3).map(m => `<span style="color:var(--accent);">${escapeHtml(m.name)}</span>`).join(', ')}${missing.length > 3 ? `, +${missing.length-3}` : ''}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
 function render() {
+  renderTodayStatus();
   metricsEl.innerHTML = '';
   if (state.metrics.length === 0) {
     metricsEl.innerHTML = `<div class="empty">No metrics yet. Tap the button above to add one.</div>`;
