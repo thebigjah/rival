@@ -546,11 +546,9 @@ document.getElementById('add-save').addEventListener('click', () => {
   render();
 });
 
-function safeRender() { render(); renderArchived(); }
-safeRender();
-// Wrap render to also handle archived
-const _r = render;
-render = safeRender;
+// Initial render — also brings up archived section
+render();
+renderArchived();
 </script>
 </body>
 </html>
