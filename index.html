@@ -80,6 +80,8 @@
   .cell.missed { background: rgba(229,74,40,0.15); }
   .calheat-legend { display: flex; gap: 4px; align-items: center; margin-top: 6px; font-size: 11px; color: var(--text-light); }
   .calheat-legend .cell { width: 10px; height: 10px; aspect-ratio: unset; }
+  .reorder-btn { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .reorder-btn:hover { border-color: var(--accent); color: var(--accent); }
   .history { margin-top: 14px; max-height: 200px; overflow-y: auto; }
   .history-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .history-row:last-child { border-bottom: none; }
@@ -315,9 +317,15 @@ function render() {
     const card = document.createElement('div');
     card.className = 'card';
     const goalLine = (m.goal != null) ? `<span style="color:var(--accent-bright);margin-left:8px;">Goal: ${fmtVal(m.goal, m.unit)}</span>` : '';
+    const activeMetrics = state.metrics.filter(x => !x.archived);
+    const activeIdx = activeMetrics.indexOf(m);
     card.innerHTML = `
       <div class="card-head">
-        <h3 class="metric-name">${escapeHtml(m.name)}</h3>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          ${activeIdx > 0 ? `<button class="reorder-btn" data-move-up="${idx}" title="Move up">↑</button>` : ''}
+          ${activeIdx < activeMetrics.length - 1 ? `<button class="reorder-btn" data-move-down="${idx}" title="Move down">↓</button>` : ''}
+          <h3 class="metric-name">${escapeHtml(m.name)}</h3>
+        </div>
         <span class="metric-meta">${m.direction === 'lower' ? '↓ lower is better' : '↑ higher is better'} · ${stats?.count ?? 0} entries${goalLine}</span>
       </div>
       <div class="row">
@@ -414,6 +422,31 @@ function render() {
       e.v = v;
       save();
       render();
+    });
+  });
+  // Reorder up/down
+  function swapMetrics(idxA, idxB) {
+    const tmp = state.metrics[idxA];
+    state.metrics[idxA] = state.metrics[idxB];
+    state.metrics[idxB] = tmp;
+    save();
+    render();
+  }
+  metricsEl.querySelectorAll('[data-move-up]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.moveUp;
+      // Find prev non-archived index
+      for (let i = idx - 1; i >= 0; i--) {
+        if (!state.metrics[i].archived) { swapMetrics(idx, i); return; }
+      }
+    });
+  });
+  metricsEl.querySelectorAll('[data-move-down]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.moveDown;
+      for (let i = idx + 1; i < state.metrics.length; i++) {
+        if (!state.metrics[i].archived) { swapMetrics(idx, i); return; }
+      }
     });
   });
   // Archive / unarchive
