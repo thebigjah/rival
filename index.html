@@ -218,15 +218,59 @@ function verdict(m, stats) {
   return { kind: 'match', text: 'On track. Keep going.' };
 }
 
+function renderArchived() {
+  let el = document.getElementById('archived-list');
+  if (!el) {
+    el = document.createElement('details');
+    el.id = 'archived-list';
+    el.style.marginTop = '36px';
+    document.querySelector('main.wrap').insertBefore(el, document.querySelector('p.footer-note'));
+  }
+  const arch = state.metrics.map((m, i) => ({m, i})).filter(x => x.m.archived);
+  if (arch.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <summary style="cursor:pointer;color:var(--text-muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase;">Archived (${arch.length})</summary>
+    <div style="display:grid;gap:8px;margin-top:12px;">
+      ${arch.map(({m, i}) => `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+          <span style="color:var(--text-light);font-size:14px;">${escapeHtml(m.name)} <span style="font-size:11px;">(${(m.entries||[]).length} entries)</span></span>
+          <span style="display:flex;gap:6px;">
+            <button class="btn btn-quiet" data-unarchive="${i}">Unarchive</button>
+            <button class="btn btn-quiet" data-del-metric="${i}">Delete</button>
+          </span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  el.querySelectorAll('[data-unarchive]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      delete state.metrics[+btn.dataset.unarchive].archived;
+      save();
+      render();
+    });
+  });
+  el.querySelectorAll('[data-del-metric]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.delMetric;
+      if (!confirm(`Delete archived "${state.metrics[idx].name}" permanently?`)) return;
+      state.metrics.splice(idx, 1);
+      save();
+      render();
+    });
+  });
+}
+
 function renderTodayStatus() {
   const el = document.getElementById('today-status');
-  if (!el || state.metrics.length === 0) { if (el) el.innerHTML = ''; return; }
+  if (!el) return;
+  const active = state.metrics.filter(m => !m.archived);
+  if (active.length === 0) { el.innerHTML = ''; return; }
   const todayKey = new Date().toISOString().slice(0, 10);
-  const logged = state.metrics.filter(m =>
+  const logged = active.filter(m =>
     (m.entries || []).some(e => new Date(e.ts).toISOString().slice(0, 10) === todayKey),
   ).length;
-  const total = state.metrics.length;
-  const missing = state.metrics.filter(m =>
+  const total = active.length;
+  const missing = active.filter(m =>
     !(m.entries || []).some(e => new Date(e.ts).toISOString().slice(0, 10) === todayKey),
   );
   if (total === 0) { el.innerHTML = ''; return; }
@@ -255,9 +299,17 @@ function render() {
   metricsEl.innerHTML = '';
   if (state.metrics.length === 0) {
     metricsEl.innerHTML = `<div class="empty">No metrics yet. Tap the button above to add one.</div>`;
+    renderArchived();
+    return;
+  }
+  const active = state.metrics.filter(m => !m.archived);
+  if (active.length === 0) {
+    metricsEl.innerHTML = `<div class="empty">All metrics archived. Unarchive one below or add a new one.</div>`;
+    renderArchived();
     return;
   }
   state.metrics.forEach((m, idx) => {
+    if (m.archived) return;
     const stats = computeStats(m);
     const v = verdict(m, stats);
     const card = document.createElement('div');
@@ -300,6 +352,7 @@ function render() {
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-quiet" data-set-goal="${idx}">${m.goal != null ? 'Edit goal' : '+ Set goal'}</button>
         ${m.entries.length > 0 ? `<button class="btn btn-quiet" data-export-csv="${idx}">Export CSV</button>` : ''}
+        <button class="btn btn-quiet" data-archive="${idx}">Archive</button>
         <button class="btn btn-quiet" data-del-metric="${idx}">Delete metric</button>
       </div>
     `;
@@ -359,6 +412,15 @@ function render() {
       const v = parseFloat(raw);
       if (!isFinite(v)) { alert('Must be a number.'); return; }
       e.v = v;
+      save();
+      render();
+    });
+  });
+  // Archive / unarchive
+  metricsEl.querySelectorAll('[data-archive]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.archive;
+      state.metrics[idx].archived = true;
       save();
       render();
     });
@@ -484,7 +546,11 @@ document.getElementById('add-save').addEventListener('click', () => {
   render();
 });
 
-render();
+function safeRender() { render(); renderArchived(); }
+safeRender();
+// Wrap render to also handle archived
+const _r = render;
+render = safeRender;
 </script>
 </body>
 </html>
