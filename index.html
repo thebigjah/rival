@@ -277,13 +277,28 @@ function renderTodayStatus() {
   );
   if (total === 0) { el.innerHTML = ''; return; }
   const allLogged = logged === total;
+  // Celebrate consecutive perfect days
+  const perfectDayKey = 'rival.lastPerfectDate.v1';
+  const today = new Date().toISOString().slice(0,10);
+  let consecutivePerfect = 0;
+  if (allLogged) {
+    // walk back from today, count consecutive days where all metrics had an entry
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const dayKey = d.toISOString().slice(0,10);
+      const allHave = active.every(m => (m.entries||[]).some(e => new Date(e.ts).toISOString().slice(0,10) === dayKey));
+      if (allHave) consecutivePerfect++;
+      else break;
+    }
+    localStorage.setItem(perfectDayKey, today);
+  }
   el.innerHTML = `
     <div style="background:var(--bg-2);border:1px solid ${allLogged ? 'var(--good)' : 'var(--border-light)'};border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
       <div>
         <div style="font-size:11px;letter-spacing:.14em;color:var(--text-light);text-transform:uppercase;margin-bottom:4px;">Today</div>
         <div style="font-size:16px;color:var(--text);font-weight:600;">
           ${allLogged
-            ? `<span style="color:var(--good);">✓ All ${total} metrics logged today</span>`
+            ? `<span style="color:var(--good);">✓ All ${total} metrics logged today${consecutivePerfect > 1 ? ` · <span style="color:var(--accent-bright);">${consecutivePerfect}-day perfect streak</span>` : ''}</span>`
             : `${logged} of ${total} logged today`}
         </div>
       </div>
