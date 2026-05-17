@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rival — only one person you have to beat</title>
+<meta name="description" content="Track any metric. The only comparison is to your own historical data. No social, no leaderboards, no streaks designed to manipulate you.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0604;
+    --bg-2: #16110b;
+    --card: #1b1510;
+    --border: #2e2820;
+    --border-light: #3a342a;
+    --text: #f5f0e0;
+    --text-muted: #b6a98e;
+    --text-light: #847b69;
+    --accent: #c2a173;
+    --accent-bright: #e8b968;
+    --good: #9bd187;
+    --intrusion: #e54a28;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+  .serif { font-family: 'Cinzel', Georgia, serif; }
+  .kicker { font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+  h1.title { font-family: 'Cinzel', Georgia, serif; font-size: clamp(40px, 6vw, 64px); font-weight: 700; margin: 0 0 14px; line-height: 1.04; }
+  p.lead { font-size: 18px; color: var(--text-muted); margin: 0 0 36px; line-height: 1.65; max-width: 580px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 18px; }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+  .metric-name { font-family: 'Cinzel', Georgia, serif; font-size: 22px; color: var(--text); margin: 0; }
+  .metric-meta { font-size: 12px; color: var(--text-light); }
+  .row { display: flex; gap: 10px; align-items: stretch; margin: 12px 0; flex-wrap: wrap; }
+  input[type="text"], input[type="number"] {
+    flex: 1; min-width: 120px;
+    padding: 12px 14px;
+    background: var(--bg-2); color: var(--text);
+    border: 1px solid var(--border-light); border-radius: 8px;
+    font-family: inherit; font-size: 15px; outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  .btn {
+    appearance: none; border: none; cursor: pointer;
+    padding: 12px 22px; border-radius: 8px;
+    font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: .04em;
+    transition: transform 80ms ease, opacity 120ms ease;
+  }
+  .btn:active { transform: translateY(1px) scale(.99); }
+  .btn-primary { background: var(--accent); color: var(--bg); }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border-light); }
+  .btn-quiet { background: transparent; color: var(--text-light); border: 1px solid var(--border); font-size: 12px; padding: 8px 14px; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 8px; margin: 18px 0 12px; }
+  .stat { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 8px; padding: 12px 14px; }
+  .stat-label { font-size: 10px; font-weight: 700; color: var(--text-light); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: var(--text); }
+  .stat-value.pr { color: var(--accent-bright); }
+  .chart { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 8px; padding: 14px; margin-top: 8px; height: 130px; position: relative; overflow: hidden; }
+  .chart svg { width: 100%; height: 100%; }
+  .verdict { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 14px; line-height: 1.5; }
+  .verdict.win { background: rgba(155,209,135,0.1); border: 1px solid rgba(155,209,135,0.35); color: var(--good); }
+  .verdict.match { background: rgba(194,161,115,0.08); border: 1px solid var(--border-light); color: var(--text-muted); }
+  .verdict.below { background: rgba(229,74,40,0.08); border: 1px solid rgba(229,74,40,0.3); color: #f0a288; }
+  .history { margin-top: 14px; max-height: 200px; overflow-y: auto; }
+  .history-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .history-row:last-child { border-bottom: none; }
+  .history-date { color: var(--text-light); }
+  .history-val { color: var(--text); font-weight: 600; }
+  .add-card { background: transparent; border: 1px dashed var(--border-light); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: border-color 120ms; }
+  .add-card:hover { border-color: var(--accent); }
+  .add-card p { margin: 0; color: var(--text-muted); font-size: 14px; }
+  .empty { text-align: center; padding: 40px 20px; color: var(--text-light); }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 12px; padding: 28px; max-width: 440px; width: 100%; }
+  .modal h3 { font-family: 'Cinzel', Georgia, serif; font-size: 22px; margin: 0 0 18px; color: var(--text); }
+  .modal label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px; margin-top: 14px; }
+  .modal .row { gap: 10px; }
+  .footer-note { font-size: 13px; color: var(--text-light); text-align: center; margin-top: 36px; }
+  .help { font-size: 13px; color: var(--text-light); line-height: 1.6; margin-top: 18px; max-width: 640px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="kicker">There is only one person you have to beat</p>
+  <h1 class="title">Rival.</h1>
+  <p class="lead">
+    Track any metric. The only comparison is to your own historical data. No leaderboards, no streaks designed to keep you addicted, no other people. The rival is you, last week.
+  </p>
+
+  <button class="btn btn-primary" id="open-add" style="margin-bottom: 24px;">+ Add a metric to track</button>
+
+  <div id="metrics"></div>
+
+  <p class="help">
+    Built for: sleep hours, focused work hours, push-up count, miles run, pages read, prayer minutes, Bible chapters, calories, weight, anything. Higher-is-better OR lower-is-better — your choice per metric. PRs auto-highlighted.
+  </p>
+
+  <p class="footer-note">Rival v0.1 · saves to your browser · a Purcell Ventures tool · no analytics, no accounts</p>
+</main>
+
+<!-- ADD METRIC MODAL -->
+<div class="modal-bg" id="modal-add">
+  <div class="modal">
+    <h3>New metric</h3>
+    <label>What are you tracking?</label>
+    <input id="add-name" type="text" placeholder="e.g. push-ups, sleep hours, deep work minutes" />
+    <label>Unit (optional)</label>
+    <input id="add-unit" type="text" placeholder="e.g. reps, hours, minutes, miles" />
+    <label>Direction</label>
+    <div class="row" style="margin-top: 6px;">
+      <button class="btn btn-ghost" id="dir-higher" data-d="higher" style="flex:1;">Higher is better</button>
+      <button class="btn btn-ghost" id="dir-lower" data-d="lower" style="flex:1;">Lower is better</button>
+    </div>
+    <div class="row" style="margin-top: 20px; justify-content: flex-end;">
+      <button class="btn btn-quiet" id="add-cancel">Cancel</button>
+      <button class="btn btn-primary" id="add-save">Add metric</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'rival.metrics.v1';
+const state = (() => {
+  try { return JSON.parse(localStorage.getItem(KEY) || '{"metrics":[]}'); }
+  catch { return { metrics: [] }; }
+})();
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+const metricsEl = document.getElementById('metrics');
+
+function fmtDate(ts) { return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+function fmtVal(v, unit) { return unit ? `${v} ${unit}` : String(v); }
+
+function computeStats(m) {
+  const entries = m.entries || [];
+  if (entries.length === 0) return null;
+  const vals = entries.map(e => e.v);
+  const last = entries[entries.length - 1].v;
+  const max = Math.max(...vals);
+  const min = Math.min(...vals);
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const pr = m.direction === 'lower' ? min : max;
+  // last 7 vs prior 7 (or whatever's available)
+  const last7 = entries.slice(-7).map(e => e.v);
+  const prior7 = entries.slice(-14, -7).map(e => e.v);
+  const avg7 = last7.length ? last7.reduce((a,b)=>a+b,0)/last7.length : null;
+  const avgPrior7 = prior7.length ? prior7.reduce((a,b)=>a+b,0)/prior7.length : null;
+  return { last, max, min, avg, pr, avg7, avgPrior7, count: entries.length };
+}
+
+function renderChart(entries, direction) {
+  if (entries.length < 2) return '<p style="text-align:center;color:var(--text-light);font-size:13px;margin-top:46px;">log at least 2 entries to see the trend</p>';
+  const vals = entries.map(e => e.v);
+  const max = Math.max(...vals);
+  const min = Math.min(...vals);
+  const range = Math.max(max - min, 0.0001);
+  const W = 100, H = 100, pad = 4;
+  const pts = entries.map((e, i) => {
+    const x = pad + (i / Math.max(entries.length - 1, 1)) * (W - 2 * pad);
+    const y = H - pad - ((e.v - min) / range) * (H - 2 * pad);
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  });
+  const fillPath = `M${pts[0]} L${pts.join(' L')} L${pad + (W - 2*pad)},${H-pad} L${pad},${H-pad} Z`;
+  const lastIdx = entries.length - 1;
+  const lastX = pad + (lastIdx / Math.max(entries.length - 1, 1)) * (W - 2 * pad);
+  const lastY = H - pad - ((entries[lastIdx].v - min) / range) * (H - 2 * pad);
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <path d="${fillPath}" fill="rgba(194,161,115,0.12)" />
+    <polyline points="${pts.join(' ')}" fill="none" stroke="#c2a173" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+    <circle cx="${lastX.toFixed(2)}" cy="${lastY.toFixed(2)}" r="1.8" fill="#e8b968" />
+  </svg>`;
+}
+
+function verdict(m, stats) {
+  if (!stats || stats.count < 2) return { kind: 'match', text: 'Keep logging. The verdict comes after two.' };
+  const isPR = m.direction === 'lower' ? stats.last <= stats.min : stats.last >= stats.max;
+  const isMatch = stats.last === stats.max || stats.last === stats.min;
+  if (isPR && isMatch) {
+    return { kind: 'win', text: m.direction === 'lower' ? `New personal best (lowest). Previously: ${fmtVal(stats.entries?.slice(-2,-1)?.[0]?.v ?? '?', m.unit)}.` : `New personal best. The bar moves up.` };
+  }
+  if (stats.avg7 !== null && stats.avgPrior7 !== null) {
+    const better = m.direction === 'lower' ? stats.avg7 < stats.avgPrior7 : stats.avg7 > stats.avgPrior7;
+    const same = Math.abs(stats.avg7 - stats.avgPrior7) < 0.001;
+    if (better) return { kind: 'win', text: `7-day avg ${(stats.avg7).toFixed(1)} vs prior ${(stats.avgPrior7).toFixed(1)}. You\'re beating last week\'s you.` };
+    if (same)   return { kind: 'match', text: `Flat against last week. The week didn\'t move you either way.` };
+    return { kind: 'below', text: `7-day avg ${(stats.avg7).toFixed(1)} vs prior ${(stats.avgPrior7).toFixed(1)}. Last week\'s you is ahead.` };
+  }
+  return { kind: 'match', text: 'On track. Keep going.' };
+}
+
+function render() {
+  metricsEl.innerHTML = '';
+  if (state.metrics.length === 0) {
+    metricsEl.innerHTML = `<div class="empty">No metrics yet. Tap the button above to add one.</div>`;
+    return;
+  }
+  state.metrics.forEach((m, idx) => {
+    const stats = computeStats(m);
+    const v = verdict(m, stats);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-head">
+        <h3 class="metric-name">${escapeHtml(m.name)}</h3>
+        <span class="metric-meta">${m.direction === 'lower' ? '↓ lower is better' : '↑ higher is better'} · ${stats?.count ?? 0} entries</span>
+      </div>
+      <div class="row">
+        <input type="number" inputmode="decimal" placeholder='today\\'s value' data-input="${idx}" step="any" />
+        <button class="btn btn-primary" data-log="${idx}">Log today</button>
+      </div>
+      ${stats ? `
+      <div class="stats-row">
+        <div class="stat"><div class="stat-label">Last</div><div class="stat-value">${fmtVal(stats.last, m.unit)}</div></div>
+        <div class="stat"><div class="stat-label">${m.direction === 'lower' ? 'Best (lowest)' : 'Best'}</div><div class="stat-value pr">${fmtVal(stats.pr, m.unit)}</div></div>
+        <div class="stat"><div class="stat-label">Avg</div><div class="stat-value">${fmtVal(stats.avg.toFixed(1), m.unit)}</div></div>
+      </div>
+      <div class="chart">${renderChart(m.entries, m.direction)}</div>
+      <div class="verdict ${v.kind}">${v.text}</div>
+      ${m.entries.length > 0 ? `
+      <details style="margin-top:14px;">
+        <summary style="cursor:pointer;color:var(--text-muted);font-size:13px;">History (${m.entries.length})</summary>
+        <div class="history">
+          ${m.entries.slice().reverse().map((e, i) => `
+            <div class="history-row">
+              <span class="history-date">${fmtDate(e.ts)}</span>
+              <span class="history-val">${fmtVal(e.v, m.unit)}</span>
+              <button class="btn btn-quiet" data-del-entry="${idx}" data-ent-idx="${m.entries.length - 1 - i}" style="padding:2px 8px;font-size:11px;">×</button>
+            </div>
+          `).join('')}
+        </div>
+      </details>` : ''}
+      ` : `<p style="color:var(--text-light);font-size:13px;margin:10px 0 0;">Log your first value above to start the rivalry with yourself.</p>`}
+      <div style="margin-top:14px;text-align:right;">
+        <button class="btn btn-quiet" data-del-metric="${idx}">Delete metric</button>
+      </div>
+    `;
+    metricsEl.appendChild(card);
+  });
+  // Wire log buttons
+  metricsEl.querySelectorAll('[data-log]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.log;
+      const inp = metricsEl.querySelector(`[data-input="${idx}"]`);
+      const v = parseFloat(inp.value);
+      if (!isFinite(v)) { inp.focus(); return; }
+      state.metrics[idx].entries = state.metrics[idx].entries || [];
+      state.metrics[idx].entries.push({ ts: Date.now(), v });
+      save();
+      render();
+    });
+  });
+  metricsEl.querySelectorAll('[data-del-metric]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.delMetric;
+      if (!confirm(`Delete "${state.metrics[idx].name}" and all its entries?`)) return;
+      state.metrics.splice(idx, 1);
+      save();
+      render();
+    });
+  });
+  metricsEl.querySelectorAll('[data-del-entry]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.delEntry;
+      const ei = +btn.dataset.entIdx;
+      state.metrics[idx].entries.splice(ei, 1);
+      save();
+      render();
+    });
+  });
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// Add modal
+const modal = document.getElementById('modal-add');
+let pendingDirection = 'higher';
+document.getElementById('open-add').addEventListener('click', () => {
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-unit').value = '';
+  pendingDirection = 'higher';
+  setDir('higher');
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('add-name').focus(), 50);
+});
+function setDir(d) {
+  pendingDirection = d;
+  document.getElementById('dir-higher').style.background = d === 'higher' ? 'var(--accent)' : 'transparent';
+  document.getElementById('dir-higher').style.color = d === 'higher' ? 'var(--bg)' : 'var(--text)';
+  document.getElementById('dir-lower').style.background = d === 'lower' ? 'var(--accent)' : 'transparent';
+  document.getElementById('dir-lower').style.color = d === 'lower' ? 'var(--bg)' : 'var(--text)';
+}
+document.getElementById('dir-higher').addEventListener('click', () => setDir('higher'));
+document.getElementById('dir-lower').addEventListener('click', () => setDir('lower'));
+document.getElementById('add-cancel').addEventListener('click', () => modal.classList.remove('show'));
+modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+document.getElementById('add-save').addEventListener('click', () => {
+  const name = document.getElementById('add-name').value.trim();
+  if (!name) { document.getElementById('add-name').focus(); return; }
+  const unit = document.getElementById('add-unit').value.trim();
+  state.metrics.push({ name, unit, direction: pendingDirection, entries: [] });
+  save();
+  modal.classList.remove('show');
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
