@@ -71,6 +71,15 @@
   .verdict.win { background: rgba(155,209,135,0.1); border: 1px solid rgba(155,209,135,0.35); color: var(--good); }
   .verdict.match { background: rgba(194,161,115,0.08); border: 1px solid var(--border-light); color: var(--text-muted); }
   .verdict.below { background: rgba(229,74,40,0.08); border: 1px solid rgba(229,74,40,0.3); color: #f0a288; }
+  .calheat { display: grid; grid-template-columns: repeat(53, 1fr); gap: 2px; margin-top: 10px; padding: 10px; background: var(--bg-2); border-radius: 8px; border: 1px solid var(--border-light); overflow: hidden; }
+  .cell { aspect-ratio: 1; border-radius: 2px; background: var(--bg); position: relative; }
+  .cell.h1 { background: rgba(194,161,115,0.25); }
+  .cell.h2 { background: rgba(194,161,115,0.5); }
+  .cell.h3 { background: rgba(194,161,115,0.75); }
+  .cell.h4 { background: var(--accent-bright); }
+  .cell.missed { background: rgba(229,74,40,0.15); }
+  .calheat-legend { display: flex; gap: 4px; align-items: center; margin-top: 6px; font-size: 11px; color: var(--text-light); }
+  .calheat-legend .cell { width: 10px; height: 10px; aspect-ratio: unset; }
   .history { margin-top: 14px; max-height: 200px; overflow-y: auto; }
   .history-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .history-row:last-child { border-bottom: none; }
@@ -236,6 +245,7 @@ function render() {
         <div class="stat"><div class="stat-label">Avg</div><div class="stat-value">${fmtVal(stats.avg.toFixed(1), m.unit)}</div></div>
       </div>
       <div class="chart">${renderChart(m.entries, m.direction, m.goal)}</div>
+      ${renderCalHeat(m)}
       <div class="verdict ${v.kind}">${v.text}</div>
       ${m.entries.length > 0 ? `
       <details style="margin-top:14px;">
@@ -356,6 +366,55 @@ function render() {
 }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function renderCalHeat(m) {
+  if (!m.entries || m.entries.length === 0) return '';
+  // Last 365 days, day-quantized
+  const byDay = {};
+  m.entries.forEach(e => {
+    const key = new Date(e.ts).toISOString().slice(0, 10);
+    byDay[key] = (byDay[key] || []).concat(e.v);
+  });
+  const dayVals = Object.fromEntries(
+    Object.entries(byDay).map(([k, vs]) => [k, m.direction === 'lower' ? Math.min(...vs) : Math.max(...vs)]),
+  );
+  const allVals = Object.values(dayVals);
+  if (allVals.length === 0) return '';
+  const max = Math.max(...allVals);
+  const min = Math.min(...allVals);
+  const range = Math.max(max - min, 0.0001);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days = [];
+  for (let i = 364; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (key in dayVals) {
+      const v = dayVals[key];
+      let intensity;
+      if (m.direction === 'lower') {
+        intensity = 1 - (v - min) / range;
+      } else {
+        intensity = (v - min) / range;
+      }
+      const cls = intensity < 0.25 ? 'h1' : intensity < 0.5 ? 'h2' : intensity < 0.75 ? 'h3' : 'h4';
+      days.push(`<div class="cell ${cls}" title="${key}: ${fmtVal(v, m.unit)}"></div>`);
+    } else {
+      days.push(`<div class="cell" title="${key}: no entry"></div>`);
+    }
+  }
+  return `
+    <div class="calheat">${days.join('')}</div>
+    <div class="calheat-legend">
+      <span>365-day heatmap · less</span>
+      <div class="cell"></div>
+      <div class="cell h1"></div>
+      <div class="cell h2"></div>
+      <div class="cell h3"></div>
+      <div class="cell h4"></div>
+      <span>more</span>
+    </div>
+  `;
 }
 
 // Add modal
