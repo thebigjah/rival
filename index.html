@@ -13,106 +13,321 @@
 <meta name="theme-color" content="#0a0604">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Barlow:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+/*  ============================================================
+    RIVAL · stadium scoreboard / athletic dashboard
+    -----------------------------------------------------------
+    Theme: a JumboTron in a half-lit gym at 5am. LED-digital
+    numbers, court-yellow accents, stadium-red alarm color.
+    Self-competition framed as a coach's stat-board. The rival
+    is you, last week — and the board never lies.
+    Categorically separate from every other tool.
+    ============================================================ */
+
   :root {
-    --bg: #0a0604;
-    --bg-2: #16110b;
-    --card: #1b1510;
-    --border: #2e2820;
-    --border-light: #3a342a;
-    --text: #f5f0e0;
-    --text-muted: #b6a98e;
-    --text-light: #847b69;
-    --accent: #c2a173;
-    --accent-bright: #e8b968;
-    --good: #9bd187;
-    --intrusion: #e54a28;
+    --court:#0d0d0d;
+    --court-deep:#050505;
+    --panel:#1a1a1a;
+    --panel-light:#262626;
+    --line:#404040;
+    --line-light:#5a5a5a;
+    --chalk:#f0f0e8;
+    --chalk-dim:#a0a098;
+    --chalk-faint:#6e6e68;
+    --sport:#ffce00;
+    --sport-deep:#c89e00;
+    --turf:#2e9555;
+    --alarm:#d62828;
+    --tan:#d4a056;
+    --bg: var(--court);
+    --bg-2: var(--panel);
+    --card: var(--panel);
+    --border: var(--line);
+    --border-light: var(--line-light);
+    --text: var(--chalk);
+    --text-muted: var(--chalk-dim);
+    --text-light: var(--chalk-faint);
+    --accent: var(--sport);
+    --accent-bright: var(--sport);
+    --good: var(--turf);
+    --intrusion: var(--alarm);
+
+    --display:'Russo One', Impact, sans-serif;
+    --body:'Barlow', system-ui, sans-serif;
+    --led:'Roboto Mono', monospace;
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    background: var(--court);
+    color: var(--chalk);
+    font-family: var(--body);
+    font-weight: 400;
     -webkit-font-smoothing: antialiased;
+    line-height: 1.45;
+    font-size: 16px;
+  }
+  /* Court-line grid texture */
+  body::before {
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+    background-image:
+      linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(212, 160, 86, 0.04) calc(100% - 1px)),
+      linear-gradient(0deg, transparent 0, transparent calc(100% - 1px), rgba(212, 160, 86, 0.04) calc(100% - 1px));
+    background-size: 48px 48px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px 80px; position: relative; z-index: 2; }
+
+  /* HEADER — scoreboard nameplate */
+  main.wrap > .kicker,
+  main.wrap > h1.title,
+  main.wrap > p.lead { display: block; }
+
+  .kicker {
+    font-family: var(--led); font-weight: 700;
+    font-size: 11px; letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--court);
+    background: var(--sport);
+    padding: 5px 12px;
+    margin: 56px 0 18px;
+    display: inline-block;
+  }
+  h1.title {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(48px, 9vw, 92px);
+    color: var(--chalk);
+    margin: 0 0 16px;
+    line-height: 0.95;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+  h1.title::after {
+    content:" 01";
+    color: var(--sport);
+    font-family: var(--led); font-weight: 700;
+    font-size: 0.4em;
+    letter-spacing: 0.05em;
+    vertical-align: 0.5em;
+  }
+  p.lead {
+    font-family: var(--body); font-weight: 500;
+    font-size: 17px;
+    color: var(--chalk-dim);
+    margin: 0 0 36px;
+    max-width: 580px;
     line-height: 1.55;
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
-  .serif { font-family: 'Cinzel', Georgia, serif; }
-  .kicker { font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
-  h1.title { font-family: 'Cinzel', Georgia, serif; font-size: clamp(40px, 6vw, 64px); font-weight: 700; margin: 0 0 14px; line-height: 1.04; }
-  p.lead { font-size: 18px; color: var(--text-muted); margin: 0 0 36px; line-height: 1.65; max-width: 580px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 18px; }
-  .card-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
-  .metric-name { font-family: 'Cinzel', Georgia, serif; font-size: 22px; color: var(--text); margin: 0; }
-  .metric-meta { font-size: 12px; color: var(--text-light); }
+
+  /* CARDS — scoreboard panels */
+  .card {
+    background: var(--panel);
+    border: 2px solid var(--line);
+    border-top: 4px solid var(--sport);
+    border-radius: 0;
+    padding: 22px 26px 24px;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .card::after {
+    content:""; position:absolute; top:8px; right:10px;
+    width:8px; height:8px; border-radius:50%;
+    background: var(--turf); box-shadow: 0 0 6px var(--turf);
+  }
+  .card-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 10px; flex-wrap: wrap; gap: 12px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--line);
+  }
+  .metric-name {
+    font-family: var(--display); font-weight: 400;
+    font-size: 24px;
+    color: var(--chalk);
+    margin: 0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .metric-meta {
+    font-family: var(--led); font-size: 11px;
+    color: var(--sport-deep);
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
   .row { display: flex; gap: 10px; align-items: stretch; margin: 12px 0; flex-wrap: wrap; }
   input[type="text"], input[type="number"] {
     flex: 1; min-width: 120px;
-    padding: 12px 14px;
-    background: var(--bg-2); color: var(--text);
-    border: 1px solid var(--border-light); border-radius: 8px;
-    font-family: inherit; font-size: 15px; outline: none;
+    padding: 11px 14px;
+    background: var(--court-deep); color: var(--chalk);
+    border: 1.5px solid var(--line); border-radius: 0;
+    font-family: var(--led); font-weight: 500;
+    font-size: 16px; outline: none;
   }
-  input:focus { border-color: var(--accent); }
+  input:focus { border-color: var(--sport); }
+  input::placeholder { color: var(--chalk-faint); }
   .btn {
     appearance: none; border: none; cursor: pointer;
-    padding: 12px 22px; border-radius: 8px;
-    font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: .04em;
-    transition: transform 80ms ease, opacity 120ms ease;
+    padding: 12px 22px; border-radius: 0;
+    font-family: var(--display); font-weight: 400;
+    font-size: 13px; letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition: background 100ms;
   }
-  .btn:active { transform: translateY(1px) scale(.99); }
-  .btn-primary { background: var(--accent); color: var(--bg); }
-  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border-light); }
-  .btn-quiet { background: transparent; color: var(--text-light); border: 1px solid var(--border); font-size: 12px; padding: 8px 14px; }
-  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 8px; margin: 18px 0 12px; }
-  .stat { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 8px; padding: 12px 14px; }
-  .stat-label { font-size: 10px; font-weight: 700; color: var(--text-light); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; }
-  .stat-value { font-size: 22px; font-weight: 700; color: var(--text); }
-  .stat-value.pr { color: var(--accent-bright); }
-  .chart { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 8px; padding: 14px; margin-top: 8px; height: 130px; position: relative; overflow: hidden; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--sport); color: var(--court); }
+  .btn-primary:hover { background: var(--sport-deep); }
+  .btn-ghost { background: transparent; color: var(--chalk); border: 1.5px solid var(--chalk-dim); }
+  .btn-ghost:hover { background: var(--chalk-dim); color: var(--court); }
+  .btn-quiet { background: transparent; color: var(--chalk-dim); border: 1px solid var(--line); font-size: 11px; padding: 7px 14px; font-family: var(--led); letter-spacing: 0.12em; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 0; margin: 16px 0 14px; border: 1.5px solid var(--line); background: var(--court-deep); }
+  .stat { background: transparent; border: none; border-right: 1px solid var(--line); border-radius: 0; padding: 12px 14px; }
+  .stat:last-child { border-right: none; }
+  .stat-label { font-family: var(--led); font-weight: 500; font-size: 9.5px; color: var(--chalk-faint); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-family: var(--led); font-weight: 700; font-size: 26px; color: var(--chalk); line-height: 1; letter-spacing: -0.02em; }
+  .stat-value.pr { color: var(--sport); text-shadow: 0 0 8px rgba(255, 206, 0, 0.4); }
+
+  .chart {
+    background: var(--court-deep);
+    border: 1.5px solid var(--line);
+    border-radius: 0;
+    padding: 12px;
+    margin-top: 8px;
+    height: 140px;
+    position: relative; overflow: hidden;
+  }
   .chart svg { width: 100%; height: 100%; }
-  .verdict { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 14px; line-height: 1.5; }
-  .verdict.win { background: rgba(155,209,135,0.1); border: 1px solid rgba(155,209,135,0.35); color: var(--good); }
-  .verdict.match { background: rgba(194,161,115,0.08); border: 1px solid var(--border-light); color: var(--text-muted); }
-  .verdict.below { background: rgba(229,74,40,0.08); border: 1px solid rgba(229,74,40,0.3); color: #f0a288; }
-  .calheat { display: grid; grid-template-columns: repeat(53, 1fr); gap: 2px; margin-top: 10px; padding: 10px; background: var(--bg-2); border-radius: 8px; border: 1px solid var(--border-light); overflow: hidden; }
-  .cell { aspect-ratio: 1; border-radius: 2px; background: var(--bg); position: relative; }
-  .cell.h1 { background: rgba(194,161,115,0.25); }
-  .cell.h2 { background: rgba(194,161,115,0.5); }
-  .cell.h3 { background: rgba(194,161,115,0.75); }
-  .cell.h4 { background: var(--accent-bright); }
-  .cell.missed { background: rgba(229,74,40,0.15); }
-  .calheat-legend { display: flex; gap: 4px; align-items: center; margin-top: 6px; font-size: 11px; color: var(--text-light); }
+
+  .verdict {
+    font-family: var(--display); font-weight: 400;
+    margin-top: 14px; padding: 12px 18px; border-radius: 0;
+    font-size: 13px; line-height: 1.4;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    border-left: 4px solid currentColor;
+  }
+  .verdict.win { background: rgba(46, 149, 85, 0.12); border-color: var(--turf); color: var(--turf); }
+  .verdict.match { background: rgba(255, 206, 0, 0.08); border-color: var(--sport); color: var(--sport); }
+  .verdict.below { background: rgba(214, 40, 40, 0.10); border-color: var(--alarm); color: var(--alarm); }
+
+  .calheat {
+    display: grid; grid-template-columns: repeat(53, 1fr); gap: 2px;
+    margin-top: 10px; padding: 10px;
+    background: var(--court-deep);
+    border-radius: 0;
+    border: 1.5px solid var(--line);
+    overflow: hidden;
+  }
+  .cell { aspect-ratio: 1; border-radius: 0; background: var(--panel-light); position: relative; }
+  .cell.h1 { background: rgba(255, 206, 0, 0.25); }
+  .cell.h2 { background: rgba(255, 206, 0, 0.5); }
+  .cell.h3 { background: rgba(255, 206, 0, 0.75); }
+  .cell.h4 { background: var(--sport); box-shadow: 0 0 4px rgba(255, 206, 0, 0.5); }
+  .cell.missed { background: rgba(214, 40, 40, 0.2); }
+  .calheat-legend {
+    display: flex; gap: 4px; align-items: center; margin-top: 6px;
+    font-family: var(--led); font-size: 10px; color: var(--chalk-faint);
+    letter-spacing: 0.08em;
+  }
   .calheat-legend .cell { width: 10px; height: 10px; aspect-ratio: unset; }
-  .reorder-btn { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; font-family: inherit; }
-  .reorder-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .history { margin-top: 14px; max-height: 200px; overflow-y: auto; }
-  .history-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+
+  .reorder-btn {
+    background: transparent; border: 1px solid var(--line);
+    color: var(--chalk-dim); border-radius: 0;
+    padding: 3px 9px; font-size: 10.5px; cursor: pointer;
+    font-family: var(--led); font-weight: 500;
+    letter-spacing: 0.08em;
+  }
+  .reorder-btn:hover { border-color: var(--sport); color: var(--sport); }
+
+  .history { margin-top: 14px; max-height: 220px; overflow-y: auto; }
+  .history-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid var(--line);
+    font-family: var(--led); font-size: 13px;
+  }
   .history-row:last-child { border-bottom: none; }
-  .history-date { color: var(--text-light); }
-  .history-val { color: var(--text); font-weight: 600; }
-  .add-card { background: transparent; border: 1px dashed var(--border-light); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: border-color 120ms; }
-  .add-card:hover { border-color: var(--accent); }
-  .add-card p { margin: 0; color: var(--text-muted); font-size: 14px; }
-  .empty { text-align: center; padding: 40px 20px; color: var(--text-light); }
-  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+  .history-date { color: var(--chalk-faint); letter-spacing: 0.06em; }
+  .history-val { color: var(--chalk); font-weight: 700; }
+
+  .add-card {
+    background: transparent;
+    border: 2px dashed var(--line-light);
+    border-radius: 0;
+    padding: 26px; text-align: center; cursor: pointer;
+    transition: border-color 120ms, background 120ms;
+  }
+  .add-card:hover { border-color: var(--sport); background: rgba(255, 206, 0, 0.04); }
+  .add-card p {
+    margin: 0;
+    font-family: var(--display); font-weight: 400;
+    color: var(--chalk-dim); font-size: 14px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .empty {
+    text-align: center; padding: 48px 20px;
+    color: var(--chalk-faint);
+    font-family: var(--body); font-size: 15px;
+  }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(13, 13, 13, 0.75); display: none; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
   .modal-bg.show { display: flex; }
-  .modal { background: var(--bg-2); border: 1px solid var(--border-light); border-radius: 12px; padding: 28px; max-width: 440px; width: 100%; }
-  .modal h3 { font-family: 'Cinzel', Georgia, serif; font-size: 22px; margin: 0 0 18px; color: var(--text); }
-  .modal label { display: block; font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px; margin-top: 14px; }
+  .modal {
+    background: var(--panel);
+    border: 2px solid var(--line);
+    border-top: 4px solid var(--sport);
+    border-radius: 0; padding: 28px;
+    max-width: 460px; width: 100%;
+  }
+  .modal h3 {
+    font-family: var(--display); font-weight: 400;
+    font-size: 24px;
+    margin: 0 0 18px;
+    color: var(--chalk);
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .modal label {
+    display: block;
+    font-family: var(--led); font-weight: 700;
+    font-size: 10px; color: var(--sport);
+    letter-spacing: .22em; text-transform: uppercase;
+    margin-bottom: 6px; margin-top: 14px;
+  }
   .modal .row { gap: 10px; }
-  .footer-note { font-size: 13px; color: var(--text-light); text-align: center; margin-top: 36px; }
-  .help { font-size: 13px; color: var(--text-light); line-height: 1.6; margin-top: 18px; max-width: 640px; }
+
+  .footer-note {
+    font-family: var(--led); font-size: 11px;
+    color: var(--chalk-faint);
+    text-align: center; margin-top: 48px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .help {
+    font-family: var(--body); font-size: 13.5px;
+    color: var(--chalk-dim);
+    line-height: 1.6; margin-top: 18px;
+    max-width: 640px;
+  }
+  .credit {
+    font-family: var(--led); font-weight: 700;
+    font-size: 9px; letter-spacing: 0.4em;
+    color: var(--chalk-faint);
+    text-align: center; margin-top: 14px;
+    opacity: 0.6;
+  }
+
+  @media (max-width: 600px) {
+    h1.title { font-size: 52px; }
+    .calheat { grid-template-columns: repeat(28, 1fr); }
+    .stat-value { font-size: 22px; }
+    .modal { padding: 22px; }
+  }
 </style>
 </head>
 <body>
 <main class="wrap">
-  <p class="kicker">There is only one person you have to beat</p>
-  <h1 class="title">Rival.</h1>
+  <p class="kicker">ONLY ONE OPPONENT</p>
+  <h1 class="title">Rival</h1>
   <p class="lead">
-    Track any metric. The only comparison is to your own historical data. No leaderboards, no streaks designed to keep you addicted, no other people. The rival is you, last week.
+    Track any metric. The only comparison is your own historical data. No leaderboards, no manipulative streaks, no other people. The rival is you, last week.
   </p>
 
   <div id="today-status"></div>
@@ -125,7 +340,8 @@
     Built for: sleep hours, focused work hours, push-up count, miles run, pages read, prayer minutes, Bible chapters, calories, weight, anything. Higher-is-better OR lower-is-better — your choice per metric. PRs auto-highlighted.
   </p>
 
-  <p class="footer-note">Rival v0.1 · saves to your browser · a Purcell Ventures tool · no analytics, no accounts</p>
+  <p class="footer-note">Rival v0.1 · saves locally · no analytics · no accounts</p>
+  <div class="credit">— PURCELLVENTURES.CO —</div>
 </main>
 
 <!-- ADD METRIC MODAL -->
